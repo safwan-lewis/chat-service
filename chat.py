@@ -6,9 +6,12 @@ from client.chat_client import ChatClient, NotConnectedError
 
 async def handle_user_input(chat_client, loop):
     while True:
+        print('\n\n')
         print('< 1 > closes connection and quits')
         print('< 2 > list logged-in users')
         print('< 3 > login')
+        print('\tchoice: ', end='', flush=True)
+
 
         command = await aioconsole.ainput()
         if command == '1':
