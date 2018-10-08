@@ -4,9 +4,9 @@ import click
 from server.chat_server import ChatServer
 from client.chat_client import ChatClient, NotConnectedError
 
-async def handle_user_input(chat_client):
+async def handle_user_input(chat_client, loop):
     while True:
-        print('< 1 > disconnect')
+        print('< 1 > closes connection and quits')
         print('< 2 > list logged-in users')
         print('< 3 > login')
 
@@ -16,6 +16,7 @@ async def handle_user_input(chat_client):
             try:
                 chat_client.disconnect()
                 print('disconnected')
+                loop.stop()
             except NotConnectedError:
                 print('client is not connected ...')
             except Exception as e:
@@ -28,6 +29,7 @@ async def handle_user_input(chat_client):
             login_name = await aioconsole.ainput('enter login-name')
             try:
                 await chat_client.login(login_name)
+                print('logged-in')
             except:
                 print('error loggining in')
 
@@ -43,10 +45,10 @@ def connect(host, port):
     chat_client = ChatClient(ip = host, port=port)
     loop = asyncio.get_event_loop()
 
-    asyncio.ensure_future(chat_client._connect())
+    loop.run_until_complete(chat_client._connect())
 
     # display menu, wait for command from user, invoke method on client
-    asyncio.ensure_future(handle_user_input(chat_client=chat_client))
+    asyncio.ensure_future(handle_user_input(chat_client=chat_client, loop = loop))
 
     loop.run_forever()
 
