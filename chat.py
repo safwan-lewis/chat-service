@@ -17,6 +17,16 @@ async def handle_user_input(chat_client):
                 print('client is not connected ...')
             except Exception as e:
                 print('error disconnecting {}'.format(e))
+        elif command == '2': #list registered users
+            users = await chat_client.lru()
+            print(users)
+
+        elif command == '3':
+            login_name = await aioconsole.ainput('enter login-name')
+            try:
+                await chat_client.login(login_name)
+            except:
+                print('error loggining in')
 
 
 @click.group()
