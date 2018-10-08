@@ -7,6 +7,10 @@ class NotConnectedError(Exception):
 class LoginError(Exception):
     pass
 
+class LoginConflictError(Exception):
+    pass
+
+
 class ChatClientProtocol(asyncio.Protocol):
     def __init__(self):
         self._pieces = []
@@ -70,7 +74,7 @@ class ChatClient:
             loop.close()
 
     async def lru(self):
-        self._transport.write('/lru$'.encode('utf-8'))
+        self._transport.write('/lru $'.encode('utf-8'))
         # await for response message from server
         lru_response = await self._protocol._responses_q.get()
 
@@ -84,7 +88,10 @@ class ChatClient:
         login_response = await self._protocol._responses_q.get()
         success = login_response.lstrip('/login ')
 
-        if success != 'success':
+        if success == 'already exists':
+            raise LoginConflictError()
+
+        elif success != 'success':
             raise LoginError()
 
 

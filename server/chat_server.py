@@ -24,11 +24,16 @@ class ChatServerProtocol(asyncio.Protocol):
         if command.startswith('/login '):
             #TODO: check if login-name already exists
 
-            login_name = command.lstrip('/login').rstrip('$')
-            client_record = ChatServerProtocol.clients[self._transport]
-            client_record['login-name'] = login_name
+            login_name = command.lstrip('/login').rstrip('$').strip()
 
-            response = '/login success$'
+            all_login_names = [v['login-name'] for v in ChatServerProtocol.clients.values()]
+            if login_name in all_login_names:
+                response = '/login already exists$'
+            else:
+                client_record = ChatServerProtocol.clients[self._transport]
+                client_record['login-name'] = login_name
+                response = '/login success$'
+
             self._transport.write(response.encode('utf-8'))
 
 
