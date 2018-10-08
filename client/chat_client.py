@@ -1,6 +1,12 @@
 import asyncio
 import threading
 
+class NotConnectedError(Exception):
+    pass
+
+class LoginError(Exception):
+    pass
+
 class ChatClientProtocol(asyncio.Protocol):
     def __init__(self):
         self._pieces = []
@@ -18,11 +24,6 @@ class ChatClientProtocol(asyncio.Protocol):
 
     def connection_lost(self, exc):
         self._transport.close()
-class NotConnectedError(Exception):
-    pass
-
-class LoginError(Exception):
-    pass
 
 class ChatClient:
     def __init__(self, ip, port):
@@ -43,6 +44,7 @@ class ChatClient:
                 lambda: ChatClientProtocol(),
                 self._ip,
                 self._port)
+
             self._connected = True
             print('connected to chat server')
 

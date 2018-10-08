@@ -6,7 +6,10 @@ from client.chat_client import ChatClient, NotConnectedError
 
 async def handle_user_input(chat_client):
     while True:
-        print('1- enter for disconnect')
+        print('< 1 > disconnect')
+        print('< 2 > list logged-in users')
+        print('< 3 > login')
+
         command = await aioconsole.ainput()
         if command == '1':
             #disconnect
@@ -37,13 +40,14 @@ def cli():
 @click.argument("host")
 @click.argument("port", type=int)
 def connect(host, port):
-    click.echo('connect to chat server at {}:{}'.format(host, port))
     chat_client = ChatClient(ip = host, port=port)
-    # display menu, wait for command from user, invoke method on client
-
     loop = asyncio.get_event_loop()
+
     asyncio.ensure_future(chat_client._connect())
+
+    # display menu, wait for command from user, invoke method on client
     asyncio.ensure_future(handle_user_input(chat_client=chat_client))
+
     loop.run_forever()
 
 @cli.command(help='run chat server')
