@@ -2,7 +2,7 @@ import asyncio
 
 
 class ChatServerProtocol(asyncio.Protocol):
-    # master dict {transport: {'remote': ('127.0.0.1', 76678), 'login-name': 'omari'}
+    # master dict {transport: {'remote': ('127.0.0.1', 76678), 'login-name': 'omari', 'rooms': [public, room1]}
     clients = {}
     rooms = [{'name': 'public',
               'owner': 'system',
@@ -57,7 +57,7 @@ class ChatServerProtocol(asyncio.Protocol):
         self._remote_addr = transport.get_extra_info('peername')
         print('[+] client {} connected.'.format(self._remote_addr))
         self._transport = transport
-        ChatServerProtocol.clients[transport] = {'remote': self._remote_addr, 'login-name': None}
+        ChatServerProtocol.clients[transport] = {'remote': self._remote_addr, 'login-name': None, 'rooms': ['public']}
 
     def data_received(self, data):
         """Handle data"""
