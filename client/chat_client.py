@@ -17,7 +17,8 @@ class LoginConflictError(Exception):
 class ChatClientProtocol(asyncio.Protocol):
     def __init__(self):
         self._pieces = []
-        self._responses_q = asyncio.Queue(10)
+        self._responses_q = asyncio.Queue()
+        self._user_messages_q = asyncio.Queue()
 
     def connection_made(self, transport: asyncio.Transport):
         self._transport = transport
@@ -26,7 +27,14 @@ class ChatClientProtocol(asyncio.Protocol):
         self._pieces.append(data.decode('utf-8'))
 
         if ''.join(self._pieces).endswith('$'):
-            asyncio.ensure_future(self._responses_q.put(''.join(self._pieces).rstrip('$')))
+            protocol_msg = ''.join(self._pieces).rstrip('$')
+
+            if protocol_msg.startswith('/MSG '):
+                user_msg = protocol_msg.lstrip('/MSG')
+                asyncio.ensure_future(self._user_messages_q.put(user_msg))
+            else:
+                asyncio.ensure_future(self._responses_q.put(''.join(self._pieces).rstrip('$')))
+
             self._pieces = []
 
     def connection_lost(self, exc):
@@ -117,6 +125,14 @@ class ChatClient:
             rooms.append({'name': room_attributes[0], 'owner': room_attributes[1], 'description': room_attributes[2]})
 
         return rooms
+
+    async def post(self, msg, room):
+        # post to a room:
+        # /post public&hello everyone
+        self._transport.write('/post {}&{}$'.format(room.strip(), msg.strip()).encode('utf-8'))
+
+    async def get_user_msg(self):
+        return await self._protocol._user_messages_q.get()
 
 if __name__ == '__main__':
     LOCAL_HOST = '127.0.0.1'

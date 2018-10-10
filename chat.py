@@ -9,6 +9,11 @@ from client.chat_client import (
     LoginError
 )
 
+async def display_msgs(chat_client):
+    while True:
+        msg = await chat_client.get_user_msg()
+        print('\n\n\t\tRECEIVED MESSAGE: {}'.format(msg))
+
 
 async def handle_user_input(chat_client, loop):
     while True:
@@ -17,6 +22,8 @@ async def handle_user_input(chat_client, loop):
         print('< 2 > list logged-in users')
         print('< 3 > login')
         print('< 4 > list rooms')
+        print('< 5 > post message to a room')
+
 
         print('\tchoice: ', end='', flush=True)
 
@@ -56,6 +63,15 @@ async def handle_user_input(chat_client, loop):
             except Exception as e:
                 print('error getting rooms from server {}'.format(e))
 
+        elif command == '5':
+            try:
+
+                user_message = await aioconsole.ainput('enter your message: ')
+                await chat_client.post(user_message, 'public')
+
+            except Exception as e:
+                print('error posting message {}'.format(e))
+
 
 @click.group()
 def cli():
@@ -73,6 +89,7 @@ def connect(host, port):
 
     # display menu, wait for command from user, invoke method on client
     asyncio.ensure_future(handle_user_input(chat_client=chat_client, loop=loop))
+    asyncio.ensure_future(display_msgs(chat_client=chat_client))
 
     loop.run_forever()
 

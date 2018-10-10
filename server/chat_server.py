@@ -7,7 +7,7 @@ class ChatServerProtocol(asyncio.Protocol):
     rooms = [{'name': 'public',
               'owner': 'system',
               'description': 'The public room which acts as broadcast, all logged-in users are in public room by default'}
-            ]
+             ]
 
     def __init__(self):
         self._pieces = []
@@ -51,6 +51,15 @@ class ChatServerProtocol(asyncio.Protocol):
             response = '/lrooms {}$'.format('\n'.join(room_msgs))
             self._transport.write(response.encode('utf-8'))
 
+        elif command.startswith('/post '):
+            # expected request format: /post public&hello everyone
+            room, msg = command.lstrip('/post').rstrip('$').split('&')
+
+            transports = [k for k, v in ChatServerProtocol.clients.items() if room.strip() in v['rooms']]
+
+            msg_to_send = '/MSG {}$'.format(msg)
+            for transport in transports:
+                transport.write(msg_to_send.encode('utf-8'))
 
     def connection_made(self, transport: asyncio.Transport):
         """Called on new client connections"""
