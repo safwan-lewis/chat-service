@@ -23,6 +23,8 @@ class ChatServerProtocol(asyncio.Protocol):
 
         if command.startswith('/login '):
             #TODO: check if login-name already exists
+            #TODO: what to do when already logged-in
+
 
             login_name = command.lstrip('/login').rstrip('$').strip()
 

@@ -81,6 +81,10 @@ class ChatClient:
         #unmarshel into list of registered users
         #/lru omari, nick, tom
         users = lru_response.lstrip('/lru ').split(', ')
+
+        #filter out any Nones or empty strings
+        users = [u for u in users if u and u != '']
+
         return users
 
     async def login(self, login_name):
