@@ -1,8 +1,13 @@
 import asyncio
 
+
 class ChatServerProtocol(asyncio.Protocol):
     # master dict {transport: {'remote': ('127.0.0.1', 76678), 'login-name': 'omari'}
-    clients={}
+    clients = {}
+    rooms = [{'name': 'public',
+              'owner': 'system',
+              'description': 'The public room which acts as broadcast, all logged-in users are in public room by default'}
+            ]
 
     def __init__(self):
         self._pieces = []
@@ -10,8 +15,9 @@ class ChatServerProtocol(asyncio.Protocol):
     def _handle_command(self):
         command = ''.join(self._pieces)
         self._pieces = []
+
         if command.startswith('/lru'):
-            #get list of registered users
+            # get list of registered users
             lru = [r['login-name'] for r in ChatServerProtocol.clients.values() if r['login-name']]
             response = '/lru '
             for user in lru:
@@ -21,10 +27,9 @@ class ChatServerProtocol(asyncio.Protocol):
             response = ''.join([response, '$'])
             self._transport.write(response.encode('utf-8'))
 
-        if command.startswith('/login '):
-            #TODO: check if login-name already exists
-            #TODO: what to do when already logged-in
-
+        elif command.startswith('/login '):
+            # TODO: check if login-name already exists
+            # TODO: what to do when already logged-in
 
             login_name = command.lstrip('/login').rstrip('$').strip()
 
@@ -38,6 +43,14 @@ class ChatServerProtocol(asyncio.Protocol):
 
             self._transport.write(response.encode('utf-8'))
 
+        elif command.startswith('/lrooms '):
+            # response format
+            # /lroom public&system&public room\nroom1&omari&room to discuss chat service impl$
+
+            room_msgs = ['{}&{}&{}'.format(r['name'], r['owner'], r['description']) for r in ChatServerProtocol.rooms]
+            response = '/lrooms {}$'.format('\n'.join(room_msgs))
+            self._transport.write(response.encode('utf-8'))
+
 
     def connection_made(self, transport: asyncio.Transport):
         """Called on new client connections"""
@@ -46,22 +59,21 @@ class ChatServerProtocol(asyncio.Protocol):
         self._transport = transport
         ChatServerProtocol.clients[transport] = {'remote': self._remote_addr, 'login-name': None}
 
-
     def data_received(self, data):
         """Handle data"""
         self._pieces.append(data.decode('utf-8'))
         if ''.join(self._pieces).endswith('$'):
-
             self._handle_command()
-
 
     def connection_lost(self, exc):
         """remote closed connection"""
         print('[-] lost connectio to {}'.format(ChatServerProtocol.clients[self._transport]))
         self._transport.close()
 
+
 class ChatServer:
     LOCAL_HOST = '0.0.0.0'
+
     def __init__(self, port):
         self._port: int = port
 
@@ -72,9 +84,9 @@ class ChatServer:
     def start(self):
         """start"""
         loop = asyncio.get_event_loop()
-        server_coro = loop.create_server(lambda : ChatServerProtocol(),
-                                 host=ChatServer.LOCAL_HOST,
-                                 port=self._port)
+        server_coro = loop.create_server(lambda: ChatServerProtocol(),
+                                         host=ChatServer.LOCAL_HOST,
+                                         port=self._port)
 
         loop.run_until_complete(server_coro)
         loop.run_forever()

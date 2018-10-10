@@ -16,6 +16,8 @@ async def handle_user_input(chat_client, loop):
         print('< 1 > closes connection and quits')
         print('< 2 > list logged-in users')
         print('< 3 > login')
+        print('< 4 > list rooms')
+
         print('\tchoice: ', end='', flush=True)
 
         command = await aioconsole.ainput()
@@ -44,6 +46,15 @@ async def handle_user_input(chat_client, loop):
                 print('login name already exists, pick another name')
             except LoginError:
                 print('error loggining in, try again')
+
+        elif command == '4':
+            try:
+                rooms = await chat_client.lrooms()
+                for room in rooms:
+                    print('\n\t\troom name ({}), owner ({}): {}'.format(room['name'], room['owner'], room['description']))
+
+            except Exception as e:
+                print('error getting rooms from server {}'.format(e))
 
 
 @click.group()

@@ -1,11 +1,14 @@
 import asyncio
 import threading
 
+
 class NotConnectedError(Exception):
     pass
 
+
 class LoginError(Exception):
     pass
+
 
 class LoginConflictError(Exception):
     pass
@@ -28,6 +31,7 @@ class ChatClientProtocol(asyncio.Protocol):
 
     def connection_lost(self, exc):
         self._transport.close()
+
 
 class ChatClient:
     def __init__(self, ip, port):
@@ -78,11 +82,11 @@ class ChatClient:
         # await for response message from server
         lru_response = await self._protocol._responses_q.get()
 
-        #unmarshel into list of registered users
-        #/lru omari, nick, tom
+        # unmarshel into list of registered users
+        # /lru omari, nick, tom
         users = lru_response.lstrip('/lru ').split(', ')
 
-        #filter out any Nones or empty strings
+        # filter out any Nones or empty strings
         users = [u for u in users if u and u != '']
 
         return users
@@ -98,6 +102,21 @@ class ChatClient:
         elif success != 'success':
             raise LoginError()
 
+    async def lrooms(self):
+        # expected response format:
+        # /lroom public&system&public room\nroom1, omari, room to discuss chat service impl
+
+        self._transport.write('/lrooms $'.encode('utf-8'))
+        lrooms_response = await self._protocol._responses_q.get()
+
+        lines = lrooms_response.lstrip('/lrooms ').split('\n')
+
+        rooms = []
+        for line in lines:
+            room_attributes = line.split('&')
+            rooms.append({'name': room_attributes[0], 'owner': room_attributes[1], 'description': room_attributes[2]})
+
+        return rooms
 
 if __name__ == '__main__':
     LOCAL_HOST = '127.0.0.1'
@@ -106,6 +125,5 @@ if __name__ == '__main__':
     loop = asyncio.get_event_loop()
     chat_client = ChatClient(LOCAL_HOST, PORT)
     asyncio.ensure_future(chat_client._connect())
-
 
     chat_client.disconnect()
