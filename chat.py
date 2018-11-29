@@ -2,7 +2,7 @@ import sys
 import aioconsole
 import asyncio
 import click
-from server.chat_server import ChatServer
+from remote_apis.tcp_api.tcp_server import TCPChatServer
 from client.chat_client import (
     ChatClient,
     NotConnectedError,
@@ -112,7 +112,7 @@ def connect(host, port):
         twitter_blk_client.init_auth()
     except Exception as e:
         print('error authenticating with twitter API: {}'.format(e))
-        sys.exit(1)
+        # sys.exit(1)
 
     # display menu, wait for command from user, invoke method on client
     asyncio.ensure_future(handle_user_input(chat_client=chat_client, twitter_client = twitter_blk_client, loop=loop))
@@ -125,7 +125,7 @@ def connect(host, port):
 @click.argument('port', type=int)
 def listen(port):
     click.echo('starting chat server at {}'.format(port))
-    chat_server = ChatServer(port=port)
+    chat_server = TCPChatServer(port=port)
     chat_server.start()
 
 
