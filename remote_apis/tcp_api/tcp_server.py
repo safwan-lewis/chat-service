@@ -1,6 +1,7 @@
 import asyncio
 from server.chat_server import ChatServer
 
+
 class ChatServerProtocol(asyncio.Protocol):
 
     def __init__(self, chat_server: ChatServer):
@@ -74,8 +75,10 @@ class ChatServerProtocol(asyncio.Protocol):
 class TCPChatServer:
     LOCAL_HOST = '0.0.0.0'
 
-    def __init__(self, port):
+    def __init__(self, port, chat_server: ChatServer, loop):
+        self.chat_server = chat_server
         self._port: int = port
+        self.loop = loop
 
     def listen(self):
         """start listening"""
@@ -83,14 +86,13 @@ class TCPChatServer:
 
     def start(self):
         """start"""
-        loop = asyncio.get_event_loop()
-        chat_server = ChatServer()
-        server_coro = loop.create_server(lambda: ChatServerProtocol(chat_server),
-                                         host=TCPChatServer.LOCAL_HOST,
-                                         port=self._port)
+        print('starting TCP API server at {}'.format(self._port))
 
-        loop.run_until_complete(server_coro)
-        loop.run_forever()
+        server_coro = self.loop.create_server(lambda: ChatServerProtocol(self.chat_server),
+                                              host=TCPChatServer.LOCAL_HOST,
+                                              port=self._port)
+
+        self.loop.run_until_complete(server_coro)
 
 
 if __name__ == '__main__':

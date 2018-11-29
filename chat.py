@@ -1,8 +1,9 @@
-import sys
 import aioconsole
 import asyncio
 import click
 from remote_apis.tcp_api.tcp_server import TCPChatServer
+from server.chat_server import ChatServer
+from remote_apis.rest_api.rest_app import RestApp
 from client.chat_client import (
     ChatClient,
     NotConnectedError,
@@ -32,7 +33,6 @@ async def handle_user_input(chat_client, twitter_client, loop):
         print('< 4 > list rooms')
         print('< 5 > post message to a room')
         print('< 6 > get twitter direct messages')
-
 
         print('\tchoice: ', end='', flush=True)
 
@@ -124,9 +124,13 @@ def connect(host, port):
 @cli.command(help='run chat server')
 @click.argument('port', type=int)
 def listen(port):
-    click.echo('starting chat server at {}'.format(port))
-    chat_server = TCPChatServer(port=port)
-    chat_server.start()
+    loop = asyncio.get_event_loop()
+    chat_server = ChatServer()
+    tcp_api = TCPChatServer(port=port, chat_server=chat_server, loop=loop)
+    rest_app = RestApp(chat_server=chat_server, port=8081, loop=loop)
+    rest_app.start()
+    tcp_api.start()
+    loop.run_forever()
 
 
 if __name__ == '__main__':
